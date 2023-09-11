@@ -39,12 +39,12 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
         0, 0, 1, 0;
 
     /* 假定 eye_fov 是上下的角度 */
-    float half_height = std::tan(eye_fov / 2) * zNear;
+    float half_height = std::tan(eye_fov / 2) * -zNear;
     float half_width = half_height * aspect_ratio;
 
     // 先平移后缩放，正交投影
     Eigen::Matrix4f Morth;
-    Morth << 1 / (half_width * aspect_ratio), 0, 0, 0,
+    Morth << 1 / half_width, 0, 0, 0,
         0, 1 / half_height, 0, 0,
         0, 0, 2 / (zNear - zFar), (zFar - zNear) / (zNear - zFar),
         0, 0, 0, 1;

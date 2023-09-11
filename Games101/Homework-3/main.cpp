@@ -48,45 +48,26 @@ Eigen::Matrix4f get_model_matrix(float angle)
 }
 
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float zNear, float zFar)
-{   // TODO: Use the same projection matrix from the previous assignments
-
+{   
     Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
-
-    Eigen::Matrix4f pto = Eigen::Matrix4f::Identity();
-    pto << zNear, 0, 0, 0,
+    Eigen::Matrix4f Mperspective;
+    Mperspective << zNear, 0, 0, 0,
         0, zNear, 0, 0,
-        0, 0, (zNear + zFar), (-1 * zFar * zNear),
+        0, 0, zNear + zFar, -zNear * zFar,
         0, 0, 1, 0;
 
-    //float halfAngle = eye_fov/2.0 * MY_PI /180.0f;
-    //float top = -1.0f * tan(halfAngle) * zNear;
-    //float bottom = -1.0f * top;
-    //float right = top * aspect_ratio;
-    //float left = -1.0f * right;
+    /* 假定 eye_fov 是上下的角度 */
+    float half_height = std::tan(eye_fov / 2) * -zNear;
+    float half_width = half_height * aspect_ratio;
 
-    float halfAngle = eye_fov * MY_PI / 180.0f;
-    float height = zNear * tan(halfAngle) * 2;
-    float width = height * aspect_ratio;
-
-    auto top = -zNear * tan(halfAngle / 2);
-    auto right = top * aspect_ratio;
-    auto left = -right;
-    auto bottom = -top;
-
-
-    Eigen::Matrix4f m_s = Eigen::Matrix4f::Identity();
-    m_s << 2 / (right - left), 0, 0, 0,
-        0, 2 / (top - bottom), 0, 0,
-        0, 0, 2 / (zNear - zFar), 0,
+    // 先平移后缩放，正交投影
+    Eigen::Matrix4f Morth;
+    Morth << 1 / half_width, 0, 0, 0,
+        0, 1 / half_height, 0, 0,
+        0, 0, 2 / (zNear - zFar), (zFar - zNear) / (zNear - zFar),
         0, 0, 0, 1;
 
-    Eigen::Matrix4f m_t = Eigen::Matrix4f::Identity();
-    m_t << 1, 0, 0, -(right + left) / 2,
-        0, 1, 0, -(top + bottom) / 2,
-        0, 0, 1, -(zFar + zNear) / 2,
-        0, 0, 0, 1;
-
-    projection = m_s * m_t * pto * projection;
+    projection = Morth * Mperspective;
     return projection;
 }
 
@@ -367,9 +348,8 @@ int main(int argc, const char** argv)
 
     std::string filename = "output.png";
     objl::Loader Loader;
-    std::string obj_path = "../models/bunny/";
-    //bool loadout = Loader.LoadFile("../models/spot/spot_triangulated_good.obj");
-    bool loadout = Loader.LoadFile("../models/bunny/bunny.obj");
+    std::string obj_path = "../models/spot/";
+    bool loadout = Loader.LoadFile("../models/spot/spot_triangulated_good.obj");
     for(auto mesh:Loader.LoadedMeshes)
     {
         for(int i=0;i<mesh.Vertices.size();i+=3)
@@ -387,10 +367,12 @@ int main(int argc, const char** argv)
 
     rst::rasterizer r(700, 700);
 
-    auto texture_path = "hmap.jpg";//"spot_texture.png";
+    //auto texture_path = "hmap.jpg";//"spot_texture.png";
     //r.set_texture(Texture(obj_path + texture_path));
 
-    std::function<Eigen::Vector3f(fragment_shader_payload)> active_shader = normal_fragment_shader;
+    auto texture_path = "spot_texture.png";
+    r.set_texture(Texture(obj_path + texture_path));
+    std::function<Eigen::Vector3f(fragment_shader_payload)> active_shader = texture_fragment_shader;
 
     if (argc >= 2)
     {
