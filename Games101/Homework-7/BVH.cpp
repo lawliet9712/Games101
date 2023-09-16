@@ -157,28 +157,22 @@ Intersection BVHAccel::Intersect(const Ray& ray) const
 Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 {
     // TODO Traverse the BVH to find intersection
-    
-    // invDir: ray direction(x,y,z), invDir=(1.0/x,1.0/y,1.0/z), use this because Multiply is faster that Division
-    // dirIsNeg: ray direction(x,y,z), dirIsNeg=[int(x>0),int(y>0),int(z>0)], use this to simplify your logic
-        // TODO Traverse the BVH to find intersection
-    const std::array<int, 3> dirIsNeg = { int(ray.direction.x > 0), int(ray.direction.y > 0), int(ray.direction.z > 0) };
-    if (!node->bounds.IntersectP(ray, ray.direction_inv, dirIsNeg))
-    {
-        return {};
-    }
 
-    if (node->object) {
-        return node->object->getIntersection(ray);
-    }
+}
 
-    /* 深度优先 */
-    auto leftIntersection = getIntersection(node->left, ray);
-    auto rightIntersction = getIntersection(node->right, ray);
-    /* 
-    取最近打到的物体 
-    可能出现：
-    1. 1 个打到 1 个没打到
-    2. 两个全命中了物体，检查命中较近的物体
-    */
-    return leftIntersection.distance >= rightIntersction.distance ? rightIntersction : leftIntersection;
+
+void BVHAccel::getSample(BVHBuildNode* node, float p, Intersection &pos, float &pdf){
+    if(node->left == nullptr || node->right == nullptr){
+        node->object->Sample(pos, pdf);
+        pdf *= node->area;
+        return;
+    }
+    if(p < node->left->area) getSample(node->left, p, pos, pdf);
+    else getSample(node->right, p - node->left->area, pos, pdf);
+}
+
+void BVHAccel::Sample(Intersection &pos, float &pdf){
+    float p = std::sqrt(get_random_float()) * root->area;
+    getSample(root, p, pos, pdf);
+    pdf /= root->area;
 }
