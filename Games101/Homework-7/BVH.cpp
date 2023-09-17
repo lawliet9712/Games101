@@ -75,7 +75,7 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
             break;
         }
 
-        switch (SplitMethod::SAH) {
+        switch (SplitMethod::NAIVE) {
         case SplitMethod::NAIVE:
         {
             auto beginning = objects.begin();
@@ -157,7 +157,26 @@ Intersection BVHAccel::Intersect(const Ray& ray) const
 Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 {
     // TODO Traverse the BVH to find intersection
+    const std::array<int, 3> dirIsNeg = { int(ray.direction.x > 0), int(ray.direction.y > 0), int(ray.direction.z > 0) };
+    if (!node->bounds.IntersectP(ray, ray.direction_inv, dirIsNeg))
+    {
+        return {};
+    }
 
+    if (node->object) {
+        return node->object->getIntersection(ray);
+    }
+
+    /* 深度优先 */
+    auto leftIntersection = getIntersection(node->left, ray);
+    auto rightIntersction = getIntersection(node->right, ray);
+    /*
+    取最近打到的物体
+    可能出现：
+    1. 1 个打到 1 个没打到
+    2. 两个全命中了物体，检查命中较近的物体
+    */
+    return leftIntersection.distance >= rightIntersction.distance ? rightIntersction : leftIntersection;
 }
 
 

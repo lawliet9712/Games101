@@ -3,6 +3,7 @@
 //
 
 #include <fstream>
+#include <thread>
 #include "Scene.hpp"
 #include "Renderer.hpp"
 
@@ -22,9 +23,10 @@ void Renderer::Render(const Scene& scene)
     float imageAspectRatio = scene.width / (float)scene.height;
     Vector3f eye_pos(278, 273, -800);
     int m = 0;
-
     // change the spp value to change sample ammount
-    int spp = 16;
+    int spp = 4;
+    int worker_num = 8;
+    std::vector<std::thread> threads(worker_num);
     std::cout << "SPP: " << spp << "\n";
     for (uint32_t j = 0; j < scene.height; ++j) {
         for (uint32_t i = 0; i < scene.width; ++i) {
