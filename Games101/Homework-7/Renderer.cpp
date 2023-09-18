@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <thread>
+#include <mutex>
 #include "Scene.hpp"
 #include "Renderer.hpp"
 
@@ -22,26 +23,40 @@ void Renderer::Render(const Scene& scene)
     float scale = tan(deg2rad(scene.fov * 0.5));
     float imageAspectRatio = scene.width / (float)scene.height;
     Vector3f eye_pos(278, 273, -800);
-    int m = 0;
     // change the spp value to change sample ammount
-    int spp = 4;
-    int worker_num = 8;
+    int spp = 512;
+    int worker_num = 16;
+    std::mutex lock;
     std::vector<std::thread> threads(worker_num);
     std::cout << "SPP: " << spp << "\n";
-    for (uint32_t j = 0; j < scene.height; ++j) {
-        for (uint32_t i = 0; i < scene.width; ++i) {
-            // generate primary ray direction
-            float x = (2 * (i + 0.5) / (float)scene.width - 1) *
-                      imageAspectRatio * scale;
-            float y = (1 - 2 * (j + 0.5) / (float)scene.height) * scale;
+    int height_gap = scene.height / worker_num; // 需要可以被 8 整除
 
-            Vector3f dir = normalize(Vector3f(-x, y, 1));
-            for (int k = 0; k < spp; k++){
-                framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0) / spp;  
+    auto worker = [&](int start_height, int length) {
+        for (uint32_t j = start_height; j < start_height + length; ++j) {
+            for (uint32_t i = 0; i < scene.width; ++i) {
+                // generate primary ray direction
+                float x = (2 * (i + 0.5) / (float)scene.width - 1) *
+                    imageAspectRatio * scale;
+                float y = (1 - 2 * (j + 0.5) / (float)scene.height) * scale;
+
+                Vector3f dir = normalize(Vector3f(-x, y, 1));
+                int frame_index = j * scene.width + i;
+                float dspp = 1.0f / spp;
+                for (int k = 0; k < spp; k++) {
+                    framebuffer[frame_index] += scene.castRay(Ray(eye_pos, dir), 0) * dspp;
+                }
             }
-            m++;
+
+            //lock.lock();
+            //UpdateProgress(j / (float)scene.height);
+            //lock.unlock();
         }
-        UpdateProgress(j / (float)scene.height);
+    };
+    for (int i = 0; i < worker_num; i++) {
+        threads[i] = std::thread(worker, i * height_gap, height_gap);
+    }
+    for (int i = 0; i < threads.size(); i++) {
+        threads[i].join();
     }
     UpdateProgress(1.f);
 

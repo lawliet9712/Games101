@@ -56,54 +56,6 @@ bool Scene::trace(
 
     return (*hitObject != nullptr);
 }
-/*
-// Implementation of Path Tracing
-Vector3f Scene::castRay(const Ray& ray, int depth) const
-{
-    // TO DO Implement Path Tracing Algorithm here
-    Intersection intersection = Scene::intersect(ray);
-    if (intersection.happened) {
-        Vector3f hitPoint = intersection.coords;
-        Vector3f N = intersection.normal; // normal
-        Material* m = intersection.m;
-        Vector3f L_dir(0.0), L_indir(0.0);
-
-        // Uniformly sample the light at x (pdf_light = 1 / A)
-        Intersection rpx_inter;
-        float pdf_light;
-        Intersection intersection_light;
-        sampleLight(intersection_light, pdf_light);
-
-        // Shoot a ray from p to x
-        Vector3f dir_p_x = (intersection_light.coords - hitPoint).normalized();
-        Ray ray_p_x(hitPoint + EPSILON * N, dir_p_x);
-        Intersection intersection_p_x = Scene::intersect(ray_p_x);
-        // If the ray is not blocked in the middle
-        if (intersection_p_x.happened && intersection_p_x.m->hasEmission()) {
-            // std::cout<<1<<std::endl;
-            Vector3f NN = intersection_p_x.normal;
-            L_dir = intersection_p_x.m->m_emission * m->eval(ray.direction, dir_p_x, N) * dotProduct(dir_p_x, N) * dotProduct(-dir_p_x, NN) / intersection_p_x.distance / pdf_light;
-        }
-
-        // Test Russian Roulette with probability RussianRoulette
-        if (get_random_float() <= RussianRoulette) {
-            Vector3f dir_i = m->sample(ray.direction, N).normalized();
-            Ray ray_p_diri(hitPoint, dir_i);
-            Intersection intersection_p_diri = Scene::intersect(ray_p_diri);
-
-            // If ray r hit a non-emitting object at q
-            if (intersection_p_diri.happened && !intersection_p_diri.m->hasEmission()) {
-                L_indir = castRay(ray_p_diri, depth + 1) * m->eval(ray.direction, dir_i, N) * dotProduct(dir_i, N) / m->pdf(ray.direction, dir_i, N) / RussianRoulette;
-            }
-        }
-
-        return m->getEmission() + L_dir + L_indir;
-    }
-    else {
-        return Vector3f(0, 0, 0);
-    }
-}
-*/
 // Implementation of Path Tracing
 Vector3f Scene::castRay(const Ray &ray, int depth) const
 {
