@@ -12,7 +12,15 @@
 给定一个点 P=(2,1), 将该点绕原点先逆时针旋转 45 ◦ ，再平移 (1,2), 计算出变换后点的坐标（要求用齐次坐标进行计算）。
 ## 思路
 思路比较简单，定义好仿射变换的矩阵，然后运用到向量上即可。由于是二维平面，运用其次坐标后得到 3 x 3 的矩阵
-$ \begin{bmatrix} cosθ & -sinθ & 1 \\  sinθ & cosθ & 2 \\ 0 & 0 & 1 \end{bmatrix} $
+
+$$
+\begin{bmatrix}
+cosθ & -sinθ & 1 \\
+sinθ & cosθ & 2 \\
+0 & 0 & 1 \\
+\end{bmatrix}
+$$
+
  利用 Eigen 定义好矩阵后左乘点 p $(2,1,0)$ 即可。
 # 作业 1 - MVP 变换
 ## 要求
@@ -55,7 +63,9 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 	- zNear：近平面 Z 值
 	- zFar：原平面 Z 值
 - 正交投影的矩阵如下，由于 XY 没有再平移（透视投影已经做了 XY 的修正，所以最后一列的列向量的 XY 值为 0，只需要考虑 Z 值）
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230905173501.png)
+
 ```c++
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
                                       float zNear, float zFar)
@@ -86,7 +96,9 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
 ```
 ## 提高项 - 绕任意轴旋转
 提高项的内容难在理解推导矩阵公式，推导过程出来之后只需要直接写矩阵公式即可。
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230905225100.png)
+
 这里主要需要注意：罗德里格斯公式中的矩阵都是 3x3 的，而这里代码中运用了其次坐标，因此返回的格式是 4x4 的矩阵，所以最后还需要转换一下
 ```c++
 /* 绕任意轴旋转矩阵 */
@@ -219,7 +231,9 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
 ```
 ## 提高项 - MSAA
 这里主要对三角形进行抗锯齿，最终效果如下（感觉不是特别明显，需要放大看）
+
 ![6d2d5b90b8ad585f289be9c5f68ff68.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/6d2d5b90b8ad585f289be9c5f68ff68.png)
+
 抗锯齿的流程其实在前面实现光栅化的流程中就已经讲述了，但是前面实现的时候少写了一个点，这里每个像素还是采用一个深度值，在两个三角形叠加的边界部分，可能出现一个像素分别被两个三角形占据，而一个深度值会导致最终只显示一个三角形的颜色。因此需要根据对单个三角形 Sample 的次数，增加一个 Sample Depth List（保存每个样本的深度值） 和 Sample Frame List（每个样本的颜色）。最终上色的时候使用样本叠加的颜色。
 修改后的光栅化流程如下：
 ### 增加 Sample 的 Depth Buffer 和 Frame Buffer
@@ -406,7 +420,9 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
 框架默认实现了该 Shader，处理完默认的光栅化后即可看到效果
 ### phong_fragment_shader
 接下来需要实现光照的 Phong 模型，简单套公式即可
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230816205215.png)
+
 其中有几点需要注意：
 - $I_a$ 表示 光照的 Intensity
 - Vector3f 相乘需要使用 cwiseProduct
@@ -660,7 +676,9 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload& payl
 ```
 ## 提高项 - 双线性纹理采样
 这里主要是针对纹理过大，多个像素使用同个纹素的问题，双线性纹理采样后可以让被放大的纹理更加平滑，做法如下：
+
 ![image.png|525](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230817232730.png)
+
 简单做插值即可。
 ```c++
     Eigen::Vector3f getColorBilinear(float u, float v)
@@ -691,7 +709,9 @@ Bézier 曲线是一种用于计算机图形学的参数曲线。在本次作业
 • recursive_bezier：该函数使用一个控制点序列和一个浮点数 t 作为输入，实现 de Casteljau 算法来返回 Bézier 曲线上对应点的坐标
 ## 思路
 总体比较简单，利用课程上讲述的递归算法实现即可
+
 ![image.png|525](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/image20230820103335.png)
+
 利用给定的控制点，递归计算可以得到下一组控制点，直到控制点的数量为 1 ，即可返回。
 ```c++
 cv::Point2f recursive_bezier(const std::vector<cv::Point2f>& control_points, float t)
@@ -721,7 +741,9 @@ void bezier(const std::vector<cv::Point2f>& control_points, cv::Mat& window)
 ```
 ## 提高项
 要求对曲线做抗锯齿，原先的曲线长这样
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230912230848.png)
+
 要求中提示可以直接根据距离做着色，一开始选择用返回的控制点周围的 2x2 像素，发现效果不是很好，最终选择 3x3，控制点的 x,y 坐标进行 round 操作取到九宫格中心点，控制点离像素点的最远距离为 1.5 * $\sqrt2$  ，因为最远的情况可能为左上角的像素中心点到控制点像素的右下角，一个像素的对角线长度为 $\sqrt2$  ，所以是 $1.5 * \sqrt2$ 。所以要做的就是遍历 9 个像素，取到每个像素的中心点与控制点的距离，然后投影到 255 ~ 0 的 RGB 区间。
 ```c++
 cv::Point2f recursive_bezier(const std::vector<cv::Point2f>& control_points, float t)
@@ -760,7 +782,9 @@ void bezier(const std::vector<cv::Point2f>& control_points, cv::Mat& window)
 }
 ```
 修改后的效果如下；
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230912231049.png)
+
 # 作业 5 - 光线与三角形相交
 ## 要求
 在这部分的课程中，我们将专注于使用光线追踪来渲染图像。在光线追踪中最重要的操作之一就是找到光线与物体的交点。一旦找到光线与物体的交点，就可以执行着色并返回像素颜色。在这次作业中，我们需要实现两个部分：光线的生成和光线与三角的相交。本次代码框架的工作流程为：
@@ -825,8 +849,10 @@ void Renderer::Render(const Scene& scene)
 ```
 ### 判断三角形与射线是否相交
 这里直接代入公式即可：
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image20230822223130.png)
-$b_1$ 和 $b_2$ 分别表示 u 和 v，也就是三角形的重心坐标。
+
+ $b_1$ 和 $b_2$ 分别表示 u 和 v，也就是三角形的重心坐标。
 ```c++
 bool rayTriangleIntersect(const Vector3f& v0, const Vector3f& v1, const Vector3f& v2, const Vector3f& orig,
                           const Vector3f& dir, float& tnear, float& u, float& v)
@@ -863,9 +889,13 @@ bool rayTriangleIntersect(const Vector3f& v0, const Vector3f& v1, const Vector3f
 前两点对 Render 和 Triangle 的修改比较简单，不多赘述（感觉没有必要多此一举让我们再补充这些代码），重点在于后面两点：
 ### 光线与 AABB 判断相交
 AABB 包围盒由 6 个平面构成，将其延申，分为 3 组平面，分别对应 x，y，z 三根坐标轴，然后依次求出每个平面打到光线时的 t 值。
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/image20230822223927.png)
+
 我们计算 $o+td$ 中，t 的值表示光线经过多久会打到 AABB，以 x 轴为例，进入 x 轴平面的计算为 $o.x+td.x = x_0$ ，其中只有 t 未知，解的 t 之后得到进入 x 轴平面的时间，然后依次计算得到其他轴的 t，最后比较得到最晚进入的时间。离开包围盒的时间也是同理，最后计算出最早离开包围盒的时间。思考下图：
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/image20230914214321.png)
+
 代码如下，其中 invDir 的用意是可以直接拿来做乘法，效率更高，而 dirIsNeg 表示光线的方向，如果在往负方向则比较值的方向也需要取反。
 ```c++
 inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
@@ -899,6 +929,7 @@ inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
 ```
 ### BVH 查询
 这个比较简单，按照课程上的算法来即可：
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230823165518.png)
 
 ```c++
@@ -929,7 +960,9 @@ Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 ```
 ## 提高项 - SAH
 SAH 的[介绍](https://remoooo.com/cg/869.html) ，原本 BVH 是直接取空间包围盒最长的轴，对物体按距离排序做二分，而 SAH 主要是基于面积公式和概率论的方式来计算包围盒。这里使用分桶的方法：
-![image.png|500](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230915172708.png)
+
+![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230915172708.png)
+
 代码段会对每个轴 (x, y, z) 进行操作。
 - 对于每个轴，首先初始化一个桶（bucket）：创建一个大小为B的桶数组。B通常比较小，例如小于32。
 - 然后计算每一个物体p的质心（centroid），看看这个物体落在哪个桶里。
@@ -938,10 +971,12 @@ SAH 的[介绍](https://remoooo.com/cg/869.html) ，原本 BVH 是直接取空�
 - 对于每个可能的划分平面（总共有B-1个），使用**表面积启发式（SAH）公式评估**其成本。
 - 执行成本最低的划分（如果找不到有效的划分，就将当前节点设为叶子节点）。
 原本需要对所有物体的每一种可能划分进行评估，现在只需要对B-1个划分进行评估。因此，**分桶方法**可以在构建BVH时，有效地降低计算复杂度，提高算法的效率。
-![image.png|500](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230915172930.png)
+
+![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230915172930.png)
+
 **划分策略**：SAH的目标是找到一种空间划分方式，使得整体花费最小。
 假设有 A 个物体被划分到 x 子节点，B 个物体被划分到 y 子节点，且假设穿过子节点的概率 p 与该节点的包围盒大小成正比。那么，空间划分的总花费 C 可以近似为上图中的公式。
-其中， $S_A$、 $S_B$ 分别表示x、y子节点的表面积， $S_N$ 表示整个节点的表面积， $N_A$ 、$N_B$ 分别表示 x、y 子节点中的物体数量， $C_{isect}$  表示射线与物体相交的计算成本。
+其中， $S_A$ 、 $S_B$ 分别表示x、y子节点的表面积， $S_N$ 表示整个节点的表面积， $N_A$ 、 $N_B$ 分别表示 x、y 子节点中的物体数量， $C_{isect}$  表示射线与物体相交的计算成本。
 ```c++
 BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
 {
@@ -1067,12 +1102,18 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
 # 作业 7 - Path Tracing
 ## 要求
 实现路径追踪，主要根据如下伪代码流程：
+
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230919224007.png)
+
 注意点：
 - 计算 L_dir 的时候，第二个点乘 ws 需要 * -1，因为 ws 是 Shadingpoint 到光源的向量，参考下图
+- 
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230919224601.png)
+
 - 在 `hitPoint` 上加上 `EPSLON * N`，如果不这样，那么之后判断光线是否被遮挡会有问题(会认为被自己遮挡)，然后出现下图的问题
+- 
 ![image.png](https://obsidian-picgo-bucket.oss-cn-shenzhen.aliyuncs.com/obsidian/image/20230919224745.png)
+
 - 计算射线到光源中间有无遮挡的时候不能直接判断 `intersection.happened` ，因为命中光源时也会为 true，需要判断命中点是否满足 `hasEmission`
 总体流程如下：
 1. 从像素打出射线，检查射线是否命中，命中则继续下一步，反之结束
@@ -1215,14 +1256,16 @@ Rope::Rope(Vector2D start, Vector2D end, int num_nodes, float node_mass, float k
 ```
 ### 显式/半隐式欧拉法
 首先根据 $F=ma$  ，只要计算出质点总受力 $F$，除以质点的质量 $m$ 就可以得到质点的速度 $a$ 。质点的受力分为两部分 ： 重力 和 胡克定律计算得出的弹簧力。胡克定律如下：
+
 $$
 F_{b \rightarrow\ a} = -k\frac {b-a}{||b-a||} (||b-a||-l)
 $$
+
 a b 表示质点坐标，l 表示弹簧长度，k 为胡克定律常数系数。计算出 总受力 再施加给质点即可。
-1. 显式欧拉法 ：$x(t+1) = x(t) + v(t) * dt$
+1. 显式欧拉法 ： $x(t+1) = x(t) + v(t) * dt$
 物体下一时刻位置 = 当前时刻位置 + 当前时刻速度 * 时间
-2. 半隐式欧拉法：$x(t+1) = x(t) + v(t+1) * dt$
-物体下一时刻位置 = 当前时刻位置 + 下一时刻速度 * 时间，然后利用当前时刻的位置 $x(t)$  加上下一时刻的速度 $v(t+1) * dt$  ，$dt$ 表示时间，就可以得到下一时刻的位置 
+2. 半隐式欧拉法： $x(t+1) = x(t) + v(t+1) * dt$
+物体下一时刻位置 = 当前时刻位置 + 下一时刻速度 * 时间，然后利用当前时刻的位置 $x(t)$  加上下一时刻的速度 $v(t+1) * dt$ , $dt$ 表示时间，就可以得到下一时刻的位置 
 最后计算如下：
 ```c++
 void Rope::simulateVerlet(float delta_t, Vector2D gravity)
@@ -1255,9 +1298,11 @@ void Rope::simulateVerlet(float delta_t, Vector2D gravity)
 ```
 ### 显式 Verlet
 Verlet 是另一种精确求解所有约束的方法。这种方法的优点是只处理仿真中顶点的位置并且保证四阶精度。和欧拉法不同，Verlet 积分按如下的方式来更新下一步位置：
+
 $$
 x(t+1) = x(t) + [x(t) - x(t-1)] + a(t) * dt * dt
 $$
+
 对比上一步主要替换质点更新位置的流程
 ```c++
     void Rope::simulateVerlet(float delta_t, Vector2D gravity)
@@ -1290,9 +1335,11 @@ $$
 ```
 ### 阻尼
 增加阻尼系数 `float damping_factor = 0.00005f`，因为动能会因摩擦而减小，不可能出现无限跳动的弹簧
+
 $$
 x(t+1) = x(t) + (1-damping\_factor)*[x(t) - x(t-1)] + a(t) * dt * dt
 $$
+
 ```c++
     void Rope::simulateVerlet(float delta_t, Vector2D gravity)
     {
